@@ -91,7 +91,9 @@ app.put('/api/persons/:id', (request, response, next) => {
     const opts = {runValidators: true}
     if(name && number){
         Person.findByIdAndUpdate(id, updatedPerson, opts).then(findPerson => {
-            response.json(updatedPerson)
+            findPerson.name = updatedPerson.name
+            findPerson.number = updatedPerson.number
+            response.json(findPerson)
         })
         .catch(error => next(error))
     }
