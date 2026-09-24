@@ -55,7 +55,7 @@ app.get('/info', (request, response) =>{
      
 })
 
-app.post('/api/persons/', (request, response) =>{
+app.post('/api/persons/', (request, response, next) =>{
     const body = request.body
     const name = body.name
     const number = body.number
@@ -68,20 +68,33 @@ app.post('/api/persons/', (request, response) =>{
     }).catch(error => next(error))
 })
 
-app.put('/api/persons/:id', (request, response) => {
+// app.put('/api/persons/:id', (request, response) => {
+//     const id = request.params.id
+//     const {name, number} = request.body
+//     Person.findById(id).then(person => {
+//         if(!person){
+//             response.status(404).end()
+//         }
+//         person.name = name
+//         person.number = number
+//         return person.save().then(updatedPerson => {
+//             response.json(updatedPerson)
+//         })    
+//     })
+//     .catch(error => next(error))
+// })
+
+app.put('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
     const {name, number} = request.body
-    Person.findById(id).then(person => {
-        if(!person){
-            response.status(404).end()
-        }
-        person.name = name
-        person.number = number
-        return person.save().then(updatedPerson => {
+    const updatedPerson = {"name": name, "number": number}
+    const opts = {runValidators: true}
+    if(name && number){
+        Person.findByIdAndUpdate(id, updatedPerson, opts).then(findPerson => {
             response.json(updatedPerson)
-        })    
-    })
-    .catch(error => next(error))
+        })
+        .catch(error => next(error))
+    }
 })
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -94,9 +107,15 @@ app.delete('/api/persons/:id', (request, response) => {
 
 const errorHandler = (error, request, response, next) => {
     if(error.name === 'CastError'){
-        response.status(404).send({error: 'malformatted id'})
+       response.status(404).send({error: 'malformatted id'})
     }
-    next(error)
+    else if(error.name == 'ValidationError'){
+        response.status(400).json({error: error.message})
+    }
+    else{
+        next(error)
+    }
+    
 }
 app.use(errorHandler)
 
